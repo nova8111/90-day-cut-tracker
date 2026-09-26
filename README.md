@@ -1,97 +1,54 @@
-# 90-Day Cut Tracker (Android PWA)
+# 90-Day Cut Tracker v3
 
-A dependency-free, mobile-first Progressive Web App built around the 90-day fat-loss and muscle-retention program.
+Mobile-first PWA for the 90-day fat-loss program.
 
-## Android features
+## What changed in v3
 
-- Installable from Chrome as a home-screen app.
-- Standalone full-screen app display after installation.
-- Offline app-shell caching after the first successful online load.
-- Android-friendly 192 px / 512 px / maskable icons.
-- Local profile login with a 4–8 digit PIN.
-- Daily data retained in browser/app `localStorage`.
-- JSON export/import backup.
-- 90-day calendar, workouts, meal rotation, weight trend and adjustment logic.
+- Liquid-glass-inspired mobile redesign based on the visual architecture documented by `sdegenaar/liquid_glass_widgets`.
+- Food logging by time of day with food + quantity dropdowns.
+- Calories, protein, carbohydrates and fat calculate automatically from logged foods.
+- Palaya soru, rice, dosa, chapati, eggs, chicken, fish, dal, sambar, vegetables, curd, fruit, whey and planned small treats are included.
+- One daily milk tea is enforced in the logger.
+- Restaurant/cheat meal is a rolling 7-day entitlement. A second selection within 7 program days is disabled.
+- Any workout template can be loaded on any day, or individual exercises can be added from the preloaded exercise library.
+- Exercises can be ticked individually.
+- Compact 8-item daily checklist.
+- Quick +250 ml / +500 ml water logging.
+- Optional water notifications from 11 AM to 11 PM (default every 2 hours).
+- Existing local profiles use the same localStorage keys and are migrated automatically.
 
-## Recommended phone-only deployment: GitHub Pages
+## Important note about Liquid Glass Widgets
 
-The project intentionally keeps every deployable file in the **root folder**, so it is easy to upload from an Android phone without Git.
+`liquid_glass_widgets` is a Flutter package. This project is a dependency-free HTML/CSS/JavaScript PWA hosted directly by GitHub Pages, so the Flutter package cannot be installed into this codebase without converting the entire app to Flutter and adding a Flutter build pipeline. This version applies the package's documented design rules to the web UI: glass is concentrated in navigation and controls, while content surfaces stay readable and performant.
 
-Upload these files to the root of the GitHub repository:
+## Water notification limitation
 
-- `index.html`
-- `app.js`
-- `styles.css`
-- `manifest.webmanifest`
-- `sw.js`
-- `icon-192.png`
-- `icon-512.png`
-- `icon-maskable-512.png`
-- `README.md`
+The PWA can request Android/Chrome notification permission and issue scheduled water reminders while the installed web app is running or retained by Android. Web PWAs cannot guarantee exact local notification alarms after Android fully terminates the app. Guaranteed closed-app reminders would require a native Android build or a push-notification backend.
 
-Then enable GitHub Pages from the `main` branch / root folder. The resulting HTTPS URL can be opened in Chrome and installed to the Android home screen.
+## Update an existing GitHub Pages repository from Android
 
-## Local testing (optional)
+Repository: `nova8111/90-day-cut-tracker`
 
-On a computer:
+1. Download and extract the v3 ZIP on Android.
+2. Open Chrome and visit:
+   `https://github.com/nova8111/90-day-cut-tracker/upload/main`
+3. Tap **choose your files**.
+4. Select the files from the extracted folder. You can upload all project files, or only these changed files:
+   - `app.js`
+   - `styles.css`
+   - `index.html`
+   - `sw.js`
+   - `manifest.webmanifest`
+   - `README.md`
+5. GitHub will show them as changed files because files with the same names already exist.
+6. In **Commit changes**, use a message such as:
+   `Redesign tracker and add meal workout reminders`
+7. Choose **Commit directly to the main branch**.
+8. Tap **Commit changes**.
+9. GitHub Pages will rebuild automatically because Pages is already configured from `main` / root.
+10. Open `https://nova8111.github.io/90-day-cut-tracker/` in Chrome after deployment.
+11. Refresh the page and fully close/reopen the installed PWA once so the v3 service worker cache replaces the old version.
 
-```bash
-cd 90_day_fat_loss_tracker
-python -m http.server 8080
-```
+## Storage
 
-Then open `http://localhost:8080`.
-
-The install prompt normally requires HTTPS (or localhost), so use the deployed GitHub Pages URL for normal Android installation.
-
-## Important storage note
-
-The built-in login is **local only**. It is useful for separating profiles on the same device/browser, but it is not a true cloud account system. Clearing app/site storage or uninstalling without a backup can erase local data. Use **Backup** regularly.
-
-## Upgrade to real email login + cloud sync
-
-A practical next step is Supabase because it can provide authentication and Postgres storage. The current app can keep localStorage as an offline cache while syncing daily logs to Supabase.
-
-Suggested schema:
-
-```sql
-create table profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  display_name text,
-  start_date date not null,
-  settings jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default now()
-);
-
-create table daily_logs (
-  id bigint generated always as identity primary key,
-  user_id uuid not null references auth.users(id) on delete cascade,
-  program_day int not null check (program_day between 1 and 90),
-  log_date date not null,
-  session text,
-  weight numeric,
-  waist numeric,
-  calories int,
-  protein int,
-  water numeric,
-  steps int,
-  checks jsonb not null default '{}'::jsonb,
-  notes text,
-  closed boolean not null default false,
-  updated_at timestamptz not null default now(),
-  unique(user_id, program_day)
-);
-
-alter table profiles enable row level security;
-alter table daily_logs enable row level security;
-
-create policy "profiles own row" on profiles
-for all using (auth.uid() = id) with check (auth.uid() = id);
-
-create policy "daily logs own rows" on daily_logs
-for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-```
-
-## Health/safety note
-
-This tracker implements the agreed plan but is not medical monitoring. A 91 kg endpoint is a stretch target rather than a mandatory 90-day deadline. The adjustment logic is intentionally conservative: it does not respond to 5–7 day water-weight stalls, protects protein, and avoids crash-diet reductions.
+Data is still stored locally in the browser/PWA. Use **Backup** regularly. Clearing site/app storage can erase local data.

@@ -1,4 +1,4 @@
-const APP_VERSION = 3;
+const APP_VERSION = 4;
 const TOTAL_DAYS = 90;
 
 let deferredInstallPrompt = null;
@@ -16,6 +16,99 @@ const PLAN = {
   eatingWindow: '12 PM–6 PM',
   sleep: 'about 2:30 AM–10:00 AM'
 };
+
+const DAILY_QUOTES = [
+  'You do not need a perfect day. You need a completed day.',
+  'Win the next decision, then repeat.',
+  'Consistency is what turns effort into visible change.',
+  'Today is one vote for the person you are becoming.',
+  'Keep the promise you made to yourself this morning.',
+  'A controlled day beats an extreme day every time.',
+  'Do the basics well enough, long enough, and they become results.',
+  'Your job today is simple: follow the plan, not the mood.',
+  'Small disciplined choices compound faster than motivation.',
+  'Do not chase perfection. Protect the streak.',
+  'Every meal logged is one less decision left to chance.',
+  'Train with purpose. Eat with intention. Recover without guilt.',
+  'You are building proof that you can trust yourself.',
+  'Fat loss happens quietly before it becomes obvious.',
+  'The scale is data. Your habits are the engine.',
+  'One difficult hour does not need to become a difficult day.',
+  'Finish today in a way tomorrow-you will respect.',
+  'Strong routines make weak moments easier.',
+  'You can want the craving without obeying it.',
+  'Progress is often boring. That is why it works.',
+  'Keep training hard enough to remind your body what to keep.',
+  'Your next meal matters more than your last mistake.',
+  'A good plan followed imperfectly beats a perfect plan abandoned.',
+  'The goal is not punishment. The goal is control.',
+  'You are not starting over each morning; you are continuing.',
+  'Let hunger be information, not an instruction.',
+  'The mirror changes after the habits do.',
+  'Make the easy choice the planned choice.',
+  'Do not negotiate with the plan when you are tired.',
+  'Another ordinary day done well is a serious achievement.',
+  'Strength maintained while weight drops is a win.',
+  'You only need enough motivation to begin; routine can finish the job.',
+  'A craving passes. The result of your choice stays longer.',
+  'Keep your standards high and your process simple.',
+  'The fastest useful progress is the progress you can keep.',
+  'You are training discipline at the same time as muscle.',
+  'Measure the trend, not the emotion of one weigh-in.',
+  "Do not spend tomorrow's calories fixing today's feelings.",
+  'Your body responds to repeated weeks, not isolated moments.',
+  'A planned restaurant meal is still part of the plan.',
+  'You do not have to feel ready to act ready.',
+  'Build a day you can repeat, not one you need to recover from.',
+  'Keep showing up until the routine feels more normal than quitting.',
+  'The work that feels small today becomes visible later.',
+  'Control the portions and you can keep the foods you enjoy.',
+  'Your strength sessions are an investment in the weight you want to keep.',
+  'Do not let one number erase a week of good behavior.',
+  'Eat for the goal you chose, not the impulse that appeared.',
+  'Halfway is not a reason to relax; it is proof the system is working.',
+  'Momentum is easier to protect than rebuild.',
+  "The late-night craving has no authority over tomorrow's goal.",
+  'You are allowed to be tired and still be consistent.',
+  'The plan does not need excitement. It needs execution.',
+  'Your waistline cannot hide consistent weeks forever.',
+  'Keep the deficit controlled and the training serious.',
+  'A missed target is feedback, not permission to abandon the day.',
+  'The next seven days can change the story of the last seven.',
+  'Do not rush the result so hard that you damage the process.',
+  'Every workout completed while dieting protects more than calories.',
+  'Choose the action that makes tonight easier, not just the next five minutes.',
+  'The strongest version of you is built through repeated ordinary choices.',
+  'Let the plan decide before hunger and convenience start negotiating.',
+  'If the trend is moving, your job is to stay patient.',
+  'You are closer because you kept going on the unremarkable days.',
+  "Today's discipline is tomorrow's confidence.",
+  'Do not confuse temporary water weight with failed fat loss.',
+  'Keep meals simple enough that consistency has nowhere to hide.',
+  'You can finish strong without becoming extreme.',
+  'The aim is leaner, stronger, and healthier—not simply lighter.',
+  'A good final month is built one closed day at a time.',
+  'Protect protein, protect training, protect the routine.',
+  'The difficult choice becomes easier each time you repeat it.',
+  'Make tonight boring enough that tomorrow feels successful.',
+  'You have already done too much work to hand control back to old habits.',
+  "The result is getting closer even when today's mirror looks the same.",
+  'Finish the meal you planned, not the one your appetite improvises.',
+  'Your body is adapting; keep giving it a consistent signal.',
+  'Do not celebrate progress by abandoning the habits that created it.',
+  'The final weeks reward patience more than panic.',
+  'Stay aggressive about consistency, not about starving yourself.',
+  'The best finish is one that leaves you stronger for what comes next.',
+  'Keep the routine clean when motivation gets noisy.',
+  'One more controlled day is one more step away from your old baseline.',
+  'Use the data, make small adjustments, and keep moving.',
+  'The finish line does not need a sprint if your pace is working.',
+  'You are proving that structure can beat impulse.',
+  'Close today with fewer excuses than you opened it with.',
+  'The last stretch is where consistency becomes identity.',
+  'Do not chase a number at the cost of the physique you are building.',
+  'Day 90 is not an ending; it is evidence that you can run the system again.'
+];
 
 const SESSION_ORDER = ['Upper A', 'Lower A', 'Rest', 'Upper B', 'Lower B', 'Conditioning', 'Rest'];
 
@@ -115,7 +208,7 @@ async function installPwa(){
 }
 window.addEventListener('beforeinstallprompt', e=>{e.preventDefault();deferredInstallPrompt=e;if(state.user)renderApp();});
 window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;toast('Cut Tracker installed ✓');if(state.user)renderApp();});
-if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{})); }
+if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{})); }
 
 function userIndex(){ return JSON.parse(localStorage.getItem('cutTrackerUsers')||'{}'); }
 function saveUserIndex(v){ localStorage.setItem('cutTrackerUsers',JSON.stringify(v)); }
@@ -125,7 +218,8 @@ function sessionKey(){ return 'cutTrackerSession'; }
 function defaultProfile(username,startDate){
   return {
     version:APP_VERSION, username,startDate,createdAt:new Date().toISOString(), days:{},
-    settings:{ calorieTarget:1900,proteinTarget:170,proteinMin:150,stepFloor:3000,waterTarget:2.5,waterReminders:false,waterReminderEvery:2 },
+    settings:{ calorieTarget:1900,proteinTarget:170,proteinMin:150,stepFloor:3000,waterTarget:2.5,waterReminders:false,waterReminderEvery:2,lastWaterReminderAt:null },
+    customFoods:{},
     customSessionOrder:[...SESSION_ORDER]
   };
 }
@@ -142,6 +236,8 @@ function migrateProfile(p){
   p.settings.waterTarget ||= 2.5;
   if(typeof p.settings.waterReminders!=='boolean') p.settings.waterReminders=false;
   p.settings.waterReminderEvery ||= 2;
+  p.settings.lastWaterReminderAt ||= null;
+  p.customFoods ||= {};
   p.customSessionOrder ||= [...SESSION_ORDER];
   Object.values(p.days).forEach(d=>{
     d.checks ||= {};
@@ -215,8 +311,30 @@ function foodQuantityLabel(food,factor){
   if(factor===1) return food.serving;
   return `${factor} × ${food.serving}`;
 }
-function foodOptionHtml(ids){ return ids.map(id=>`<option value="${id}">${esc(FOOD[id].name)}</option>`).join(''); }
-function quantityOptions(foodId){ const f=FOOD[foodId];return f.factors.map(x=>`<option value="${x}">${esc(foodQuantityLabel(f,x))}</option>`).join(''); }
+function getFood(p,id){ return FOOD[id] || p.customFoods?.[id] || null; }
+function customFoodIds(p){ return Object.keys(p.customFoods||{}).sort((a,b)=>(p.customFoods[a].name||'').localeCompare(p.customFoods[b].name||'')); }
+function foodOptionHtml(p,ids){
+  const builtIn=ids.map(id=>`<option value="${id}">${esc(FOOD[id].name)}</option>`).join('');
+  const custom=customFoodIds(p).map(id=>`<option value="${id}">★ ${esc(p.customFoods[id].name)}</option>`).join('');
+  return `<optgroup label="Plan foods">${builtIn}</optgroup>${custom?`<optgroup label="Your saved foods">${custom}</optgroup>`:''}`;
+}
+function quantityOptions(p,foodId){ const f=getFood(p,foodId);if(!f)return '';return f.factors.map(x=>`<option value="${x}">${esc(foodQuantityLabel(f,x))}</option>`).join(''); }
+function renderCustomFoodCreator(p){
+  const custom=customFoodIds(p);
+  return `<details class="custom-food-panel"><summary><span>＋ Add / manage custom foods</span><b>${custom.length} saved</b></summary>
+    <div class="custom-food-grid">
+      <div class="field wide-field"><label>Food name *</label><input class="glass-input" id="customFoodName" placeholder="e.g. Homemade chicken sandwich"></div>
+      <div class="field wide-field"><label>Serving *</label><input class="glass-input" id="customFoodServing" placeholder="e.g. 1 sandwich / 1 bowl (~200 g)"></div>
+      <div class="field"><label>Calories *</label><input class="glass-input" id="customFoodKcal" type="number" inputmode="numeric" min="1" placeholder="350"></div>
+      <div class="field"><label>Protein g</label><input class="glass-input" id="customFoodProtein" type="number" inputmode="decimal" min="0" step="0.1" placeholder="25"></div>
+      <div class="field"><label>Carbs g</label><input class="glass-input" id="customFoodCarbs" type="number" inputmode="decimal" min="0" step="0.1" placeholder="40"></div>
+      <div class="field"><label>Fat g</label><input class="glass-input" id="customFoodFat" type="number" inputmode="decimal" min="0" step="0.1" placeholder="10"></div>
+      <button class="glass-button primary custom-save" id="saveCustomFoodBtn">Save food to 90-day library</button>
+    </div>
+    <p class="section-note">Only name, serving and calories are required. Add protein when you know it so the protein target stays accurate. Saved foods appear in every meal dropdown for all 90 days.</p>
+    <div class="custom-food-library">${custom.length?custom.map(id=>{const f=p.customFoods[id];return `<div class="custom-food-item"><div><strong>${esc(f.name)}</strong><span>${esc(f.serving)} · ${Math.round(f.kcal)} kcal${f.p?` · ${round1(f.p)}g P`:''}</span></div><button class="remove-x" data-delete-custom-food="${id}" aria-label="Delete saved food">×</button></div>`;}).join(''):'<span class="empty-line">No custom foods yet.</span>'}</div>
+  </details>`;
+}
 
 function cheatConflict(p,dayNum){
   let conflict=null;
@@ -258,6 +376,7 @@ function renderApp(){
   app().innerHTML=`<div class="liquid-bg"><i></i><i></i><i></i></div><div class="app-shell">
     <header class="glass-nav top-nav"><div class="brand"><div class="brand-orb small">90</div><div><h1>Cut Tracker</h1><p>${esc(p.username)} · ${phase.weeks}</p></div></div><div class="nav-actions"><button class="glass-icon" id="exportBtn" aria-label="Backup">⇩</button><button class="glass-icon" id="logoutBtn" aria-label="Logout">↪</button></div></header>
     <section class="hero content-card"><div><span class="phase-pill">Phase ${phase.n} · ${phase.name}</span><h2>Day ${n}<span>/90</span></h2><p>${formatDate(dayDate(p,n))} · ${trainingMode(n)} phase</p></div><div class="hero-progress"><strong>${progress}%</strong><span>${closedDays(p)} closed</span></div></section>
+    <section class="quote-card content-card"><span>DAY ${n} MINDSET</span><p>“${esc(DAILY_QUOTES[n-1])}”</p></section>
     <section class="quick-metrics">
       <div><span>7-day avg</span><strong>${rw?rw.toFixed(1)+' kg':'—'}</strong></div><div><span>Calories</span><strong>${Math.round(t.kcal)} / ${p.settings.calorieTarget}</strong></div><div><span>Protein</span><strong>${Math.round(t.p)} g</strong></div><div><span>Scale change</span><strong>${loss===null?'—':(loss>=0?'−':' +')+Math.abs(loss).toFixed(1)+' kg'}</strong></div>
     </section>
@@ -285,7 +404,8 @@ function renderToday(p,n){
     <section class="content-card section-card">
       <div class="section-head"><div><span class="eyebrow">Nutrition</span><h3>Log what you eat</h3></div><div class="macro-total"><strong>${Math.round(t.kcal)}</strong><span>kcal</span></div></div>
       <div class="macro-bar"><span><b>${Math.round(t.p)}g</b> protein</span><span><b>${Math.round(t.c)}g</b> carbs</span><span><b>${Math.round(t.f)}g</b> fat</span></div>
-      ${MEAL_SLOTS.map(slot=>renderMealSlot(d,slot)).join('')}
+      ${renderCustomFoodCreator(p)}
+      ${MEAL_SLOTS.map(slot=>renderMealSlot(p,d,slot)).join('')}
       ${renderCheatMeal(p,n,cheat)}
     </section>
 
@@ -310,11 +430,11 @@ function renderToday(p,n){
 }
 
 function inputField(key,label,value,step){ return `<div class="field"><label>${label}</label><input class="glass-input" data-dayfield="${key}" type="number" step="${step}" value="${esc(value)}"></div>`; }
-function renderMealSlot(d,slot){
+function renderMealSlot(p,d,slot){
   const items=d.meals.filter(x=>x.slot===slot.id);
   const first=slot.foods[0];
   return `<div class="meal-block"><div class="meal-title"><strong>${slot.label}</strong><span>${Math.round(items.reduce((a,x)=>a+(+x.kcal||0),0))} kcal</span></div>
-    <div class="meal-picker"><select class="glass-input food-select" data-slot="${slot.id}">${foodOptionHtml(slot.foods)}</select><select class="glass-input qty-select" data-slot="${slot.id}">${quantityOptions(first)}</select><button class="glass-button add-food" data-slot="${slot.id}">Add</button></div>
+    <div class="meal-picker"><select class="glass-input food-select" data-slot="${slot.id}">${foodOptionHtml(p,slot.foods)}</select><select class="glass-input qty-select" data-slot="${slot.id}">${quantityOptions(p,first)}</select><button class="glass-button add-food" data-slot="${slot.id}">Add</button></div>
     <div class="food-list">${items.length?items.map(x=>`<div class="food-row"><div><strong>${esc(x.name)}</strong><span>${esc(x.qtyLabel)}</span></div><div class="food-macros"><b>${Math.round(x.kcal)} kcal</b><span>${Math.round(x.p)}g P</span><button class="remove-x" data-remove-food="${x.id}" aria-label="Remove">×</button></div></div>`).join(''):'<p class="empty-line">Nothing logged yet.</p>'}</div>
   </div>`;
 }
@@ -349,9 +469,13 @@ function renderPlan(p,n){
 }
 function renderSettings(p){
   const installed=isStandaloneMode(),notif=('Notification' in window)?Notification.permission:'unsupported';
+  const sw=('serviceWorker' in navigator)?(navigator.serviceWorker.controller?'Active':'Starting / not controlling this page'):'Unsupported';
+  const last=p.settings.lastWaterReminderAt?new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}).format(new Date(p.settings.lastWaterReminderAt)):'None yet';
   return `<div class="stack"><section class="content-card section-card"><div class="section-head"><div><span class="eyebrow">Android</span><h3>App & reminders</h3></div><span class="phase-pill">${installed?'Installed':'PWA ready'}</span></div><p class="section-note large">${esc(pwaInstallStatusText())}</p><button class="glass-button primary" id="installAppBtn" ${installed?'disabled':''}>${installed?'Installed ✓':'Install on this phone'}</button>
     <div class="setting-row"><div><strong>Water reminders</strong><span>11 AM to 11 PM, every ${p.settings.waterReminderEvery||2} hours</span></div><label class="switch"><input id="waterReminderToggle" type="checkbox" ${p.settings.waterReminders?'checked':''}><span></span></label></div>
-    <p class="section-note">Notification permission: <b>${notif}</b>. Browser/PWA reminders work while the app is running or retained by Android, but a web app cannot guarantee exact alerts after Android fully terminates it. A native Android build would be required for guaranteed closed-app scheduling.</p></section>
+    <div class="notification-diagnostics"><div><span>Permission</span><b>${esc(notif)}</b></div><div><span>Service worker</span><b>${esc(sw)}</b></div><div><span>Last sent</span><b>${esc(last)}</b></div><div><span>Next check</span><b>${esc(nextReminderLabel(p))}</b></div></div>
+    <div class="reminder-actions"><button class="glass-button" id="testNotificationBtn">Send test notification</button><button class="glass-button" id="checkReminderBtn">Check reminder now</button></div>
+    <p class="section-note">The previous version only checked during the first 2 minutes of each reminder hour. This version catches the latest due reminder whenever the PWA wakes or regains focus. For Android, persistent notifications are sent through the service worker. Exact alarms while Android has fully stopped the PWA still need a native app or a push backend. If the test does not appear even with permission shown as <b>granted</b>, long-press the Cut Tracker icon → App info → Notifications and make sure notifications are allowed.</p></section>
     <section class="content-card section-card"><div class="section-head"><div><span class="eyebrow">Targets</span><h3>Settings & backup</h3></div></div><div class="compact-fields">${settingField('settingStart','Program start date',p.startDate,'date')}${settingField('settingCalories','Calories',p.settings.calorieTarget,'number')}${settingField('settingProtein','Protein target',p.settings.proteinTarget,'number')}${settingField('settingSteps','Step floor',p.settings.stepFloor,'number')}</div><div class="day-actions settings-actions"><button class="glass-button primary" id="saveSettingsBtn">Save</button><button class="glass-button" id="importBtn">Import backup</button><button class="glass-button danger" id="resetBtn">Reset data</button><input type="file" id="importFile" accept="application/json" class="hidden"></div></section></div>`;
 }
 function settingField(id,label,value,type){ return `<div class="field"><label>${label}</label><input class="glass-input" id="${id}" type="${type}" value="${esc(value)}"></div>`; }
@@ -366,6 +490,8 @@ function bindAppEvents(){
   document.querySelectorAll('.food-select').forEach(el=>el.addEventListener('change',updateQtySelect));
   document.querySelectorAll('.add-food').forEach(el=>el.addEventListener('click',addFood));
   document.querySelectorAll('[data-remove-food]').forEach(el=>el.addEventListener('click',removeFood));
+  $('#saveCustomFoodBtn')?.addEventListener('click',saveCustomFood);
+  document.querySelectorAll('[data-delete-custom-food]').forEach(el=>el.addEventListener('click',deleteCustomFood));
   $('#cheatPreset')?.addEventListener('change',e=>$('#customCheatCalories')?.classList.toggle('hidden',e.target.value!=='custom'));
   $('#logCheatBtn')?.addEventListener('click',logCheatMeal);
   $('#loadTemplateBtn')?.addEventListener('click',loadTemplate);
@@ -378,6 +504,8 @@ function bindAppEvents(){
   document.querySelectorAll('[data-open-day]').forEach(el=>el.addEventListener('click',()=>{state.selectedDay=+el.dataset.openDay;state.activeTab='today';renderApp();}));
   $('#installAppBtn')?.addEventListener('click',installPwa);
   $('#waterReminderToggle')?.addEventListener('change',toggleWaterReminders);
+  $('#testNotificationBtn')?.addEventListener('click',sendTestNotification);
+  $('#checkReminderBtn')?.addEventListener('click',async()=>{const sent=await checkWaterReminder(true);toast(sent?'Reminder sent':'No reminder was due; use Test notification to verify Android delivery.');});
   $('#saveSettingsBtn')?.addEventListener('click',saveSettings);
   $('#importBtn')?.addEventListener('click',()=>$('#importFile').click());$('#importFile')?.addEventListener('change',importBackup);$('#resetBtn')?.addEventListener('click',resetProfile);
   if(state.activeTab==='progress')requestAnimationFrame(()=>drawWeightChart(state.user));
@@ -386,11 +514,25 @@ function bindAppEvents(){
 function saveDayField(e){ const d=getDay(state.user,state.selectedDay);d[e.target.dataset.dayfield]=e.target.value;saveProfile(state.user);renderApp(); }
 function saveCheck(e){ const d=getDay(state.user,state.selectedDay);d.checks[e.target.dataset.check]=e.target.checked;saveProfile(state.user);renderApp(); }
 function addWater(v){ const d=getDay(state.user,state.selectedDay);d.water=round1((+d.water||0)+v);saveProfile(state.user);renderApp(); }
-function updateQtySelect(e){ const slot=e.target.dataset.slot,qty=document.querySelector(`.qty-select[data-slot="${slot}"]`);if(qty)qty.innerHTML=quantityOptions(e.target.value); }
+function updateQtySelect(e){ const slot=e.target.dataset.slot,qty=document.querySelector(`.qty-select[data-slot="${slot}"]`);if(qty)qty.innerHTML=quantityOptions(state.user,e.target.value); }
 function addFood(e){
-  const slot=e.currentTarget.dataset.slot,foodSel=document.querySelector(`.food-select[data-slot="${slot}"]`),qtySel=document.querySelector(`.qty-select[data-slot="${slot}"]`),food=FOOD[foodSel.value],factor=+qtySel.value,d=getDay(state.user,state.selectedDay);
+  const slot=e.currentTarget.dataset.slot,foodSel=document.querySelector(`.food-select[data-slot="${slot}"]`),qtySel=document.querySelector(`.qty-select[data-slot="${slot}"]`),food=getFood(state.user,foodSel.value),factor=+qtySel.value,d=getDay(state.user,state.selectedDay);
+  if(!food)return toast('That food is no longer available.');
   if(foodSel.value==='tea' && d.meals.some(x=>x.foodId==='tea')) return toast('Your one daily milk tea is already logged.');
   d.meals.push({id:uid(),slot,foodId:foodSel.value,name:food.name,qtyLabel:foodQuantityLabel(food,factor),factor,kcal:round1(food.kcal*factor),p:round1(food.p*factor),c:round1(food.c*factor),f:round1(food.f*factor)});saveProfile(state.user);renderApp();
+}
+function saveCustomFood(){
+  const p=state.user,name=$('#customFoodName')?.value.trim(),serving=$('#customFoodServing')?.value.trim()||'1 serving',kcal=parseFloat($('#customFoodKcal')?.value),protein=parseFloat($('#customFoodProtein')?.value)||0,carbs=parseFloat($('#customFoodCarbs')?.value)||0,fat=parseFloat($('#customFoodFat')?.value)||0;
+  if(!name)return alert('Enter a food name.');
+  if(!Number.isFinite(kcal)||kcal<=0)return alert('Enter calories for one serving.');
+  const id=`custom-${uid()}`;
+  p.customFoods[id]={name,serving,kcal:round1(kcal),p:round1(protein),c:round1(carbs),f:round1(fat),factors:[0.5,1,1.5,2],custom:true,createdAt:new Date().toISOString()};
+  saveProfile(p);toast(`${name} saved to your food library`);renderApp();
+}
+function deleteCustomFood(e){
+  const id=e.currentTarget.dataset.deleteCustomFood,f=state.user.customFoods?.[id];if(!f)return;
+  if(!confirm(`Remove ${f.name} from your saved food library? Meals already logged with it will stay unchanged.`))return;
+  delete state.user.customFoods[id];saveProfile(state.user);toast('Custom food removed');renderApp();
 }
 function removeFood(e){
   const d=getDay(state.user,state.selectedDay),id=e.currentTarget.dataset.removeFood,item=d.meals.find(x=>x.id===id);if(item?.cheat && d.closed)return toast('Reopen the day before changing the cheat meal.');
@@ -414,22 +556,56 @@ function toggleCloseDay(){
 }
 
 async function toggleWaterReminders(e){
-  const p=state.user;if(e.target.checked){if(!('Notification' in window)){e.target.checked=false;return alert('Notifications are not supported in this browser.');}const permission=await Notification.requestPermission();if(permission!=='granted'){e.target.checked=false;return alert('Notification permission was not granted.');}p.settings.waterReminders=true;toast('Water reminders enabled');}else{p.settings.waterReminders=false;toast('Water reminders off');}saveProfile(p);scheduleWaterReminders();renderApp();
+  const p=state.user;if(e.target.checked){
+    if(!('Notification' in window)){e.target.checked=false;return alert('Notifications are not supported in this browser.');}
+    const permission=await Notification.requestPermission();
+    if(permission!=='granted'){e.target.checked=false;return alert('Notification permission was not granted. If you previously blocked it, open Android app/site notification settings and allow Cut Tracker.');}
+    p.settings.waterReminders=true;saveProfile(p);scheduleWaterReminders(false);await showTrackerNotification('Water reminders are on 💧',`You should receive checks from 11 AM to 11 PM. Next: ${nextReminderLabel(p)}.`,`cut-water-enabled-${Date.now()}`);toast('Water reminders enabled — test notification sent');
+  }else{p.settings.waterReminders=false;saveProfile(p);scheduleWaterReminders(false);toast('Water reminders off');}
+  renderApp();
 }
 function reminderHours(p){ const step=Math.max(1,+p.settings.waterReminderEvery||2),out=[];for(let h=11;h<=23;h+=step)out.push(h);if(out[out.length-1]!==23)out.push(23);return out; }
-function scheduleWaterReminders(){ clearInterval(waterReminderTimer);if(!state.user?.settings?.waterReminders)return;checkWaterReminder();waterReminderTimer=setInterval(checkWaterReminder,30000); }
-async function checkWaterReminder(){
-  const p=state.user;if(!p?.settings?.waterReminders||!('Notification' in window)||Notification.permission!=='granted')return;const now=new Date(),h=now.getHours(),m=now.getMinutes();if(!reminderHours(p).includes(h)||m>2)return;const key=`cutWaterNotice:${toISODateLocal(now)}:${h}`;if(localStorage.getItem(key))return;localStorage.setItem(key,'1');const d=getDay(p,currentDayNumber(p)),water=+d.water||0,body=`You have logged ${water.toFixed(1)} L today. Take a water break if you need one.`;
-  try{const reg=await navigator.serviceWorker?.ready;if(reg)await reg.showNotification('Water check 💧',{body,icon:'./icon-192.png',badge:'./icon-192.png',tag:key});else new Notification('Water check 💧',{body});}catch{try{new Notification('Water check 💧',{body});}catch{}}
+function latestDueReminderHour(p,now=new Date()){ if(now.getHours()<11)return null;const due=reminderHours(p).filter(h=>h<=now.getHours());return due.length?due[due.length-1]:null; }
+function nextReminderDate(p,now=new Date()){
+  const hours=reminderHours(p);for(const h of hours){const d=new Date(now);d.setHours(h,0,0,0);if(d>now)return d;}const tomorrow=new Date(now);tomorrow.setDate(tomorrow.getDate()+1);tomorrow.setHours(hours[0],0,0,0);return tomorrow;
+}
+function nextReminderLabel(p){ if(!p.settings.waterReminders)return 'Reminders off';const d=nextReminderDate(p);return new Intl.DateTimeFormat('en-IN',{weekday:'short',hour:'numeric',minute:'2-digit'}).format(d); }
+async function showTrackerNotification(title,body,tag){
+  if(!('Notification' in window)||Notification.permission!=='granted')return false;
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    await reg.showNotification(title,{body,icon:'./icon-192.png',badge:'./notification-badge-96.png',tag,renotify:false,vibrate:[180,90,180],data:{url:'./'}});
+    return true;
+  }catch(err){console.warn('Notification failed',err);return false;}
+}
+async function sendTestNotification(){
+  if(!('Notification' in window))return alert('Notifications are not supported in this browser.');
+  let permission=Notification.permission;if(permission!=='granted')permission=await Notification.requestPermission();
+  if(permission!=='granted')return alert('Notification permission is not granted. Open Android notification settings for Cut Tracker/Chrome and allow notifications, then try again.');
+  const ok=await showTrackerNotification('Cut Tracker test 🔴','If you can see this, the app can deliver Android notifications.',`cut-test-${Date.now()}`);
+  toast(ok?'Test notification sent':'The browser could not display the notification. Check Android notification settings.');
+}
+function scheduleWaterReminders(initialCheck=true){ clearInterval(waterReminderTimer);if(!state.user?.settings?.waterReminders)return;if(initialCheck)checkWaterReminder();waterReminderTimer=setInterval(()=>checkWaterReminder(),60000); }
+async function checkWaterReminder(force=false){
+  const p=state.user;if(!p?.settings?.waterReminders||!('Notification' in window)||Notification.permission!=='granted')return false;
+  const now=new Date(),dueHour=latestDueReminderHour(p,now);if(dueHour===null)return false;
+  const key=`cutWaterNotice:${toISODateLocal(now)}:${dueHour}`;if(localStorage.getItem(key)&&!force)return false;
+  const d=getDay(p,currentDayNumber(p)),water=+d.water||0,body=`${water.toFixed(1)} L logged today. Have some water now if you are behind your ${p.settings.waterTarget} L target.`;
+  const tag=force?`cut-water-force-${Date.now()}`:key;const ok=await showTrackerNotification('Water check 💧',body,tag);
+  if(ok){if(!force)localStorage.setItem(key,'1');p.settings.lastWaterReminderAt=now.toISOString();saveProfile(p);}
+  return ok;
 }
 
 function saveSettings(){ const p=state.user,date=$('#settingStart').value,cal=parseInt($('#settingCalories').value),pro=parseInt($('#settingProtein').value),st=parseInt($('#settingSteps').value);if(date)p.startDate=date;if(cal>1200)p.settings.calorieTarget=cal;if(pro>80)p.settings.proteinTarget=pro;if(st>=1000)p.settings.stepFloor=st;saveProfile(p);state.selectedDay=currentDayNumber(p);toast('Settings saved');renderApp(); }
 function exportBackup(){ const p=state.user,blob=new Blob([JSON.stringify(p,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`cut-tracker-${p.username}-${toISODateLocal(new Date())}.json`;a.click();URL.revokeObjectURL(url);toast('Backup downloaded'); }
 function importBackup(e){ const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const data=migrateProfile(JSON.parse(r.result));if(!data.days)throw new Error();data.username=state.user.username;state.user=data;saveProfile(data);scheduleWaterReminders();toast('Backup imported');renderApp();}catch{alert('This file does not look like a valid Cut Tracker backup.');}};r.readAsText(f); }
-function resetProfile(){ if(!confirm('Reset all day logs for this profile? Export a backup first if you may need the data.'))return;const fresh=defaultProfile(state.user.username,state.user.startDate);fresh.settings={...state.user.settings};state.user=fresh;saveProfile(fresh);state.selectedDay=1;scheduleWaterReminders();toast('Profile reset');renderApp(); }
+function resetProfile(){ if(!confirm('Reset all day logs for this profile? Export a backup first if you may need the data.'))return;const fresh=defaultProfile(state.user.username,state.user.startDate);fresh.settings={...state.user.settings};fresh.customFoods={...(state.user.customFoods||{})};state.user=fresh;saveProfile(fresh);state.selectedDay=1;scheduleWaterReminders();toast('Profile reset');renderApp(); }
 
 function drawWeightChart(p){
-  const c=$('#weightChart');if(!c)return;const ctx=c.getContext('2d'),rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=rect.width*dpr;c.height=rect.height*dpr;ctx.scale(dpr,dpr);const W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);const weights=getWeights(p);ctx.font='12px system-ui';ctx.fillStyle='#8291a8';if(weights.length<2){ctx.fillText('Add at least two morning weights to see your trend.',16,30);return;}const vals=weights.map(x=>x.weight),min=Math.floor(Math.min(...vals)-1),max=Math.ceil(Math.max(...vals)+1),pad={l:38,r:12,t:18,b:28};const x=d=>pad.l+((d-1)/(TOTAL_DAYS-1))*(W-pad.l-pad.r),y=v=>pad.t+(max-v)/(max-min)*(H-pad.t-pad.b);ctx.strokeStyle='rgba(70,90,120,.13)';for(let i=0;i<5;i++){const yy=pad.t+i*(H-pad.t-pad.b)/4;ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(W-pad.r,yy);ctx.stroke();ctx.fillStyle='#8291a8';ctx.fillText((max-i*(max-min)/4).toFixed(1),2,yy+4);}ctx.strokeStyle='#568dff';ctx.lineWidth=2;ctx.beginPath();weights.forEach((pt,i)=>i?ctx.lineTo(x(pt.day),y(pt.weight)):ctx.moveTo(x(pt.day),y(pt.weight)));ctx.stroke();const trend=[];for(let d=1;d<=90;d++){const a=rolling7(p,d);if(a&&Array.from({length:7},(_,i)=>p.days[d-i]?.weight).filter(Boolean).length>=3)trend.push({day:d,weight:a});}if(trend.length>1){ctx.strokeStyle='#20b486';ctx.lineWidth=3;ctx.beginPath();trend.forEach((pt,i)=>i?ctx.lineTo(x(pt.day),y(pt.weight)):ctx.moveTo(x(pt.day),y(pt.weight)));ctx.stroke();}}
+  const c=$('#weightChart');if(!c)return;const ctx=c.getContext('2d'),rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=rect.width*dpr;c.height=rect.height*dpr;ctx.scale(dpr,dpr);const W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);const weights=getWeights(p);ctx.font='12px system-ui';ctx.fillStyle='#a8a8ad';if(weights.length<2){ctx.fillText('Add at least two morning weights to see your trend.',16,30);return;}const vals=weights.map(x=>x.weight),min=Math.floor(Math.min(...vals)-1),max=Math.ceil(Math.max(...vals)+1),pad={l:38,r:12,t:18,b:28};const x=d=>pad.l+((d-1)/(TOTAL_DAYS-1))*(W-pad.l-pad.r),y=v=>pad.t+(max-v)/(max-min)*(H-pad.t-pad.b);ctx.strokeStyle='rgba(255,255,255,.10)';for(let i=0;i<5;i++){const yy=pad.t+i*(H-pad.t-pad.b)/4;ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(W-pad.r,yy);ctx.stroke();ctx.fillStyle='#a8a8ad';ctx.fillText((max-i*(max-min)/4).toFixed(1),2,yy+4);}ctx.strokeStyle='#ff2b2b';ctx.lineWidth=2;ctx.beginPath();weights.forEach((pt,i)=>i?ctx.lineTo(x(pt.day),y(pt.weight)):ctx.moveTo(x(pt.day),y(pt.weight)));ctx.stroke();const trend=[];for(let d=1;d<=90;d++){const a=rolling7(p,d);if(a&&Array.from({length:7},(_,i)=>p.days[d-i]?.weight).filter(Boolean).length>=3)trend.push({day:d,weight:a});}if(trend.length>1){ctx.strokeStyle='#ff6b6b';ctx.lineWidth=3;ctx.beginPath();trend.forEach((pt,i)=>i?ctx.lineTo(x(pt.day),y(pt.weight)):ctx.moveTo(x(pt.day),y(pt.weight)));ctx.stroke();}}
+
+window.addEventListener('focus',()=>{if(state.user?.settings?.waterReminders)checkWaterReminder();});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&state.user?.settings?.waterReminders)checkWaterReminder();});
 
 (function init(){
   const session=localStorage.getItem(sessionKey()),idx=userIndex();if(session&&idx[session]){state.user=loadProfile(idx[session].name);if(state.user){state.selectedDay=currentDayNumber(state.user);saveProfile(state.user);scheduleWaterReminders();renderApp();return;}}renderLogin();
